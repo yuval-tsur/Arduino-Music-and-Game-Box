@@ -75,6 +75,7 @@ void loop(){
 		
 		if (receivedChar == 's'){ // Start normal play!
 			debugln("Good luck, Player 1!");
+			free_play = false;
 			memory_game();
 		}
 		

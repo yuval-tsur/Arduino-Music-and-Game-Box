@@ -25,6 +25,7 @@ void play_sequence(){
 		digitalWrite(RED_LED+letter,HIGH);
 		// Play the respective button's tone
 		PlayColor(letter, 2);
+		while(player_1.isPlaying()){delay(5);}
 		
 		debug_dec(letter);
 		word = word >> 2;
@@ -76,7 +77,7 @@ bool is_correct_letter(byte button_state){
 
 void memory_game(){
 	game_over = false;
-	POWERUP();
+	ONEUP();	
 	current_letter_index = 0;
 	level = 0;	
 	add_letter();
@@ -84,10 +85,7 @@ void memory_game(){
 	
 	while (!game_over){
 		button_state = read_buttons();
-		if (button_state>=0 & button_state<=3) {
-			delay(0.5*button_press_window);
-			turn_off_LEDs();
-			delay(0.5*button_press_window);
+		if (button_state<=3) {
 			
 			if (is_correct_letter(button_state)){
 				// Player got the right letter. Check if it was the end of the sequence
@@ -95,7 +93,7 @@ void memory_game(){
 					debugln("Correct! Level " + String(level) + " cleared!");
 					current_letter_index = 0;
 					//flash_LEDs(); // Satisfaction!
-					ONEUP();
+					POWERUP();
 					
 					add_letter();
 					play_sequence();

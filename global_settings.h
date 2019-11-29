@@ -5,12 +5,12 @@
 
 // Awesome calibration table:
 //      Button       Analog Value
-#define red_val           42 
-#define yellow_val       245               
-#define green_val        378
-#define blue_val         465
+#define red_val 42 
+#define yellow_val 245               
+#define green_val 378
+#define blue_val 465
 
-#define val_tol           50 // +- how many LSB can the measurement be far from the calibration
+#define val_tol 30 // +- how many LSB can the measurement be far from the calibration
 
 // Debug header definition
 #ifdef debug_flag
@@ -27,6 +27,8 @@
 
 // Count an array's length
 #define length(array) ((unsigned int) (sizeof (array) / sizeof (array [0])))
+
+String button2str[] = {"Red", "Yellow", "Green", "Blue"};
 
 bool game_over = true; // This is the break condition of while loops within the various games. False returns to menu.
 int button_state = 6;
@@ -55,37 +57,44 @@ void flash_LEDs(){
 	}
 }
 
-int read_buttons(){
-	String print_str = String();
-	uint16_t measured_val;
-	uint16_t measured_val2;
+byte which_button_pressed(uint16_t measured_val){
+	// Apply the calibration table
+	if ( (measured_val>30) && (measured_val<55) ){ return(0); } // Bug was so strange I had to hard code this line...
+	if ( abs( measured_val - yellow_val ) < val_tol ){ return(1); }
+	if ( abs( measured_val - green_val )  < val_tol ){ return(2); }
+	if ( abs( measured_val - blue_val )   < val_tol ){ return(3); }
+	return(6);
+}
+
+uint16_t read_analog(){
+	uint16_t measured_val = analogRead(button_pin);
+	delay(30);
+	return(min(measured_val,analogRead(button_pin))); // Try overcoming jitter
+}
+
+byte read_buttons(){
+	byte intermediate_button_state;
 	button_state = 6;
 	// Output:
 	// 6 : nothing's pressed
 	// 0-3 : R, Y, G, B Buttons
 	// 4 : OK (Not yet implemented)
 	// 5 : Cancel (Not yet implemented)
-	measured_val = analogRead(button_pin);
-	delay(20);
-	measured_val2 = analogRead(button_pin);
-	measured_val = (measured_val2 > measured_val) ? measured_val : measured_val2; // Try overcoming jitter
-	/* 		if (abs(measured_val-measured_val2) > 10){
-		debugln(String(measured_val) + " , " + String(measured_val2));
-	} */
 	
-	// Apply the calibration table
-	if ( abs( measured_val - red_val ) < val_tol ){ print_str = "Red"; button_state = 0;}
-	else if ( abs( measured_val - yellow_val ) < val_tol ){ print_str = "Yellow"; button_state = 1;}
-	else if ( abs( measured_val - green_val ) < val_tol ){ print_str = "Green"; button_state = 2;}
-	else if ( abs( measured_val - blue_val ) < val_tol ){ print_str = "Blue"; button_state = 3;}
-	
-	if (button_state>=0 & button_state<=3){
+	intermediate_button_state = which_button_pressed(read_analog());
+	if (intermediate_button_state <=3) {
+		button_state = intermediate_button_state;
 		digitalWrite(RED_LED+button_state,HIGH);
-		debugln(print_str + "!!");
 		// Play the respective button's tone
-		PlayColor(button_state, 2);
-	} else {turn_off_LEDs();}
-	
-	//debugln(measured_val);
-	return(button_state);
-}	
+		PlayColor(button_state, 1000);		
+		debugln(button2str[button_state] + "!");
+		while (intermediate_button_state <= 3){
+			intermediate_button_state = which_button_pressed(read_analog());
+		}
+	}
+turn_off_LEDs();
+player_1.stop();
+player_2.stop();
+
+return(button_state);
+}		
