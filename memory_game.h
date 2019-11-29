@@ -1,5 +1,5 @@
 #define max_level 128 // Must be a power of 2
-#define play_letters_per_sec 2
+#define letters_delay_ms 300 
 
 byte sequence[max_level/4];
 
@@ -13,7 +13,7 @@ void play_sequence(){
 	byte word;
 	byte letter;
 	debug("Level " + String(level) + ". Playing sequence (start -> end):");
-	delay(1000/play_letters_per_sec);
+	delay(letters_delay_ms);
 	for (int i_letter=0; i_letter<level; i_letter++){
 		if (i_letter%4 == 0){
 			word = sequence[(int)(i_letter/4)];
@@ -23,11 +23,13 @@ void play_sequence(){
 		letter = 0;
 		letter = bitRead(word,1)<<1 | bitRead(word,0)<<0; 		
 		digitalWrite(RED_LED+letter,HIGH);
+		// Play the respective button's tone
+		PlayColor(letter, 2);
+		
 		debug_dec(letter);
 		word = word >> 2;
-		delay(0.5*1000/play_letters_per_sec);
 		digitalWrite(RED_LED+letter,LOW);
-		delay(0.5*1000/play_letters_per_sec);		
+		delay(letters_delay_ms);		
 	}	
 	debugln("");
 }
@@ -74,6 +76,7 @@ bool is_correct_letter(byte button_state){
 
 void memory_game(){
 	game_over = false;
+	POWERUP();
 	current_letter_index = 0;
 	level = 0;	
 	add_letter();
@@ -91,7 +94,9 @@ void memory_game(){
 				if (current_letter_index == level-1){
 					debugln("Correct! Level " + String(level) + " cleared!");
 					current_letter_index = 0;
-					flash_LEDs(); // Satisfaction!
+					//flash_LEDs(); // Satisfaction!
+					ONEUP();
+					
 					add_letter();
 					play_sequence();
 				}
@@ -102,13 +107,20 @@ void memory_game(){
 				turn_off_LEDs();
 			}
 			else{ // Player got the wrong letter
+				if (level > InMemory[0]) { // NEW HIGH SCORE!
+					InMemory[0] = level;
+					lcd.print("NEW HIGH SCORE: ");
+					eeAddress = sizeof(bool);
+					EEPROM.put(eeAddress, InMemory[0]);
+					COIN(level);
+				}
+				else {DEATH();}
 				game_over = true;
 				debugln("Failed on letter " + String(current_letter_index) + ", level " + String(level) + "\n:()" );
 				current_letter_index = 0;
 				level = 0;
-				turn_on_LEDs();
-				delay(3000);
-				turn_off_LEDs();// Failure!
+				
+				GAMEOVER();
 			}
 		}
 		delay(refresh_interval);

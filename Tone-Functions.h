@@ -1151,11 +1151,10 @@ int NoteStan[3][12] = {{DO3, DO_d3, RE3, RE_d3, MI3, FA_d3, FA3, SOL_d3, SOL3, L
 
 String StrNoteStan[12] = {"DO", "DO#", "RE", "RE#", "MI", "FA#", "FA", "SOL#", "SOL", "LA#", "LA", "SI"};
 
-// Play Color and Blink Button
+// Play Color
 void PlayColor(byte LED_color, float fract = 1) {
-  SetButtonLED(LED_color);
   if (!GameSound) {delay(200);} // Long Blink if NOT Sound
-  suonaCoppia(ButtonNote[GetColorPin(LED_color)], fract, false);
+  suonaCoppia(ButtonNote[LED_color], fract, false);
 }
 
 void beep (int speakerPin, float noteFrequency, long noteDuration)
