@@ -76,6 +76,7 @@ bool is_correct_letter(byte button_state){
 }
 
 void memory_game(){
+	randomSeed(random_seed());
 	game_over = false;
 	ONEUP();	
 	current_letter_index = 0;
@@ -84,6 +85,7 @@ void memory_game(){
 	play_sequence();
 	
 	while (!game_over){
+		randomSeed(millis()); // Perhaps replace with analog input of floating pin?
 		button_state = read_buttons();
 		if (button_state<=3) {
 			
@@ -95,6 +97,11 @@ void memory_game(){
 					//flash_LEDs(); // Satisfaction!
 					POWERUP();
 					
+					delay(400);					
+					for(int i=0; i<level; i++){
+						COIN(1);
+						delay(330);
+					}
 					add_letter();
 					play_sequence();
 				}
@@ -110,7 +117,9 @@ void memory_game(){
 					lcd.print("NEW HIGH SCORE: ");
 					eeAddress = sizeof(bool);
 					EEPROM.put(eeAddress, InMemory[0]);
-					COIN(level);
+					COIN(1);
+					delay(1000);
+					CASTLE();
 				}
 				else {DEATH();}
 				game_over = true;

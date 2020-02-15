@@ -63,6 +63,9 @@
 // 1/4 (DON'T EDIT)
 #define SEMICROMA 0.25
 
+// Assign Button and Notes
+int ButtonNote[4] = {SOL_d4, RE_d4, FA_d4, DO_d4};
+
 /*
     _____________________________________________________________
     |                          Uhm...                            |
@@ -1134,9 +1137,6 @@ void playAllMusic(){
 	lcd.print(F("Game Over"));
 	GAMEOVER();
 }
-
-// Assign Button and Notes
-int ButtonNote[4] = {SOL_d4, RE_d4, FA_d4, DO_d4};
 
 int NoteStan[3][12] = {{DO3, DO_d3, RE3, RE_d3, MI3, FA_d3, FA3, SOL_d3, SOL3, LA_d3, LA3, SI3},
 	{DO4, DO_d4, RE4, RE_d4, MI4, FA_d4, FA4, SOL_d4, SOL4, LA_d4, LA4, SI4},

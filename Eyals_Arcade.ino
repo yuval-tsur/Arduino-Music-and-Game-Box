@@ -10,7 +10,7 @@ int tronca = 15; // This value is higher and the notes are separated from each o
 #define button_pin A3
 
 // External libraries
-#include <Wire.h> 
+//#include <Wire.h> 
 #include <Tone.h>
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
@@ -18,17 +18,21 @@ int tronca = 15; // This value is higher and the notes are separated from each o
 // External Hardware
 Tone player_1;
 Tone player_2;
-//LiquidCrystal_I2C lcd(0x3F,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
-LiquidCrystal_I2C  lcd(  0x27  ,   2  ,   1  ,   0  ,   4  ,   5  ,   6  ,   7  );
+
+LiquidCrystal_I2C lcd(0x3F,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+//LiquidCrystal_I2C  lcd(  0x27  ,   2  ,   1  ,   0  ,   4  ,   5  ,   6  ,   7  );
 
 // Internal headers
 #include "Tone-Functions.h"
 #include "global_settings.h"
 #include "LED-Functions.h"
 #include "memory_game.h"
+#include "reaction_game.h"
 
 void setup(){
 	pinMode(button_pin,INPUT_PULLUP);
+	pinMode(floating_pin,INPUT);
+
 	for(int i=0; i<4; i++){
 		pinMode(RED_LED+i,OUTPUT);
 	}	
@@ -38,7 +42,6 @@ void setup(){
 	while(!Serial);                         // If entered debug mode, Arduino will wait here for the Serial monitor to come alive.
 	Serial.println("Welcome to Eyal's Arcade!\nPlayer 1 Ready...");
 	#endif
-	randomSeed(millis()); // Perhaps replace with analog input of floating pin?
 	// EEPROM reading part
 	eeAddress = 0;
 	//EEPROM.get(eeAddress, GameSound); // Get Sound Settings
@@ -51,6 +54,8 @@ void setup(){
 	player_2.begin(PIN_PLAYER_2);
 	
 	introduzione();
+	delay(1000);	
+	memory_game();
 }
 
 void loop(){
@@ -77,6 +82,12 @@ void loop(){
 			debugln("Good luck, Player 1!");
 			free_play = false;
 			memory_game();
+		}
+		
+		if (receivedChar == 'r'){ // Start reaction_game play!
+			debugln("Good luck, Player 1!");
+			free_play = false;
+			reaction_game();
 		}
 		
 		if (receivedChar == 'f'){ // Free button pressing

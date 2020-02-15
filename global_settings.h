@@ -1,16 +1,16 @@
 #define debug_flag // Comment out to suppress outputs being sent over serial.
 
 #define refresh_interval 1000/15 // [ms] Used for reading button states
-#define button_press_window 400 // [ms] once button press detected - stop listening so a long press isn't interpreted as several presses
+#define button_press_window 400 // [ms] Once button press detected - stop listening so a long press isn't interpreted as several presses
 
 // Awesome calibration table:
 //      Button       Analog Value
-#define red_val 42 
+#define red_val     42 
 #define yellow_val 245               
-#define green_val 378
-#define blue_val 465
+#define green_val  378
+#define blue_val   465
 
-#define val_tol 30 // +- how many LSB can the measurement be far from the calibration
+#define val_tol     30 // +- how many LSB can the measurement be far from the calibration
 
 // Debug header definition
 #ifdef debug_flag
@@ -27,6 +27,8 @@
 
 // Count an array's length
 #define length(array) ((unsigned int) (sizeof (array) / sizeof (array [0])))
+
+#define floating_pin A0
 
 String button2str[] = {"Red", "Yellow", "Green", "Blue"};
 
@@ -53,22 +55,21 @@ void flash_LEDs(){
 		delay(150);
 		turn_off_LEDs();
 		delay(150);
-		
 	}
 }
 
-byte which_button_pressed(uint16_t measured_val){
+byte which_button_pressed(int measured_val){
 	// Apply the calibration table
-	if ( (measured_val>30) && (measured_val<55) ){ return(0); } // Bug was so strange I had to hard code this line...
+	if ( abs( measured_val - red_val    ) < val_tol ){ return(0); }
 	if ( abs( measured_val - yellow_val ) < val_tol ){ return(1); }
-	if ( abs( measured_val - green_val )  < val_tol ){ return(2); }
-	if ( abs( measured_val - blue_val )   < val_tol ){ return(3); }
+	if ( abs( measured_val - green_val  ) < val_tol ){ return(2); }
+	if ( abs( measured_val - blue_val   ) < val_tol ){ return(3); }
 	return(6);
 }
 
 uint16_t read_analog(){
 	uint16_t measured_val = analogRead(button_pin);
-	delay(30);
+	delay(20);
 	return(min(measured_val,analogRead(button_pin))); // Try overcoming jitter
 }
 
@@ -85,8 +86,8 @@ byte read_buttons(){
 	if (intermediate_button_state <=3) {
 		button_state = intermediate_button_state;
 		digitalWrite(RED_LED+button_state,HIGH);
-		// Play the respective button's tone
-		PlayColor(button_state, 1000);		
+		// Play the respective button's tone. Play an indefinite tone but stop it once button was released.
+		PlayColor(button_state, 1000);
 		debugln(button2str[button_state] + "!");
 		while (intermediate_button_state <= 3){
 			intermediate_button_state = which_button_pressed(read_analog());
@@ -97,4 +98,8 @@ player_1.stop();
 player_2.stop();
 
 return(button_state);
-}		
+}	
+
+int random_seed(){
+	return(analogRead(floating_pin));
+}	
