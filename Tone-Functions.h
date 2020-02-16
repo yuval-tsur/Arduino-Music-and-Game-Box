@@ -167,7 +167,7 @@ void setLetter(int index_letter, bool blink = true) {
 
 void suona(int frequency, float fract, bool blink = true) {
 	setLetter(getAmericanIndexOfLetterFromFrequency(frequency), blink);
-	if (!GameSound) {frequency = 0;}
+	if (isMute) {frequency = 0;}
 	player_2.play(frequency, inputTempo() * fract - tronca);
 	//enableDisplay(DISPLAY_1);
 	while(player_2.isPlaying());
@@ -178,7 +178,7 @@ void suona(int frequency, float fract, bool blink = true) {
 
 void suonaCoppia(int frequency, float fract, bool blink = true) {
 	int index_letter = getAmericanIndexOfLetterFromFrequency(frequency);
-	if (!GameSound) {frequency = 0;}
+	if (isMute) {frequency = 0;}
 	int ms = inputTempo() * fract - tronca;
 	player_1.play(frequency, ms);
 	player_2.play(frequency, ms);
@@ -193,7 +193,7 @@ void suonaCoppia(int frequency, float fract, bool blink = true) {
 void suonaDoppio(int frequency_1, int frequency_2, float fract) {
 	int index_letter_1 = getAmericanIndexOfLetterFromFrequency(frequency_1);
 	//int index_letter_2 = getAmericanIndexOfLetterFromFrequency(frequency_2);
-	if (!GameSound) {frequency_1 = 0; frequency_2 = 0;}
+	if (isMute) {frequency_1 = 0; frequency_2 = 0;}
 	int ms = inputTempo() * fract - tronca;
 	player_1.play(frequency_1, ms);
 	player_2.play(frequency_2, ms);
@@ -214,6 +214,7 @@ void suonaDoppio(int frequency_1, int frequency_2, float fract) {
 
 void pausa(float fract) {
 	delay(inputTempo() * fract);
+	
 }
 
 
@@ -1076,46 +1077,55 @@ void playAllMusic(){
 	lcd.print(F("PowerUp"));
 	POWERUP();
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("OneUp"));
 	ONEUP();
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("OverWorld"));
 	OVERWORLD();
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("UnderWater"));
 	UNDERWATER();
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("UnderWorld"));
 	UNDERWORLD();
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("Castle"));
 	CASTLE();
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("Item block"));
 	ITEMBLOCK();
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("FlagPole"));
 	FLAGPOLEFANFARE();
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("DamageWarp"));
 	DAMAGEWARP();
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("Coins"));
@@ -1123,15 +1133,18 @@ void playAllMusic(){
 	COIN(1);
 	COIN(5);
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("StarMan"));
 	STARMAN();
 	pausa(5);
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("Death"));
 	DEATH();
+	if (Serial.available() > 0) {return;}
 	
 	lcd.clear();
 	lcd.print(F("Game Over"));
@@ -1146,14 +1159,14 @@ String StrNoteStan[12] = {"DO", "DO#", "RE", "RE#", "MI", "FA#", "FA", "SOL#", "
 
 // Play Color
 void PlayColor(byte LED_color, float fract = 1) {
-	if (!GameSound) {delay(200);} // Long Blink if NOT Sound
+	if (isMute) {delay(200);} // Long Blink if NOT Sound
 	suonaCoppia(ButtonNote[LED_color], fract, false);
 }
 
 void beep (int speakerPin, float noteFrequency, long noteDuration)
 {
 	int x;
-	if (GameSound) {
+	if (!isMute) {
 		// Convert the frequency to microseconds
 		float microsecondsPerWave = 1000000/noteFrequency;
 		// Calculate how many milliseconds there are per HIGH/LOW cycles.

@@ -93,15 +93,11 @@ void memory_game(){
 				// Player got the right letter. Check if it was the end of the sequence
 				if (current_letter_index == level-1){
 					debugln("Correct! Level " + String(level) + " cleared!");
+					lcd.clear(); lcd.print("Level " + String(level)); lcd.setCursor(0,1); lcd.print(F("completed!"));
 					current_letter_index = 0;
-					//flash_LEDs(); // Satisfaction!
 					POWERUP();
 					
 					delay(400);					
-					for(int i=0; i<level; i++){
-						COIN(1);
-						delay(330);
-					}
 					add_letter();
 					play_sequence();
 				}
@@ -114,22 +110,23 @@ void memory_game(){
 			else{ // Player got the wrong letter
 				if (level > InMemory[0]) { // NEW HIGH SCORE!
 					InMemory[0] = level;
-					lcd.print("NEW HIGH SCORE: ");
-					eeAddress = sizeof(bool);
-					EEPROM.put(eeAddress, InMemory[0]);
-					COIN(1);
-					delay(1000);
-					CASTLE();
-				}
-				else {DEATH();}
-				game_over = true;
-				debugln("Failed on letter " + String(current_letter_index) + ", level " + String(level) + "\n:()" );
-				current_letter_index = 0;
-				level = 0;
-				
-				GAMEOVER();
+				lcd.print("NEW HIGH SCORE: ");
+				eeAddress = sizeof(bool);
+				EEPROM.put(eeAddress, InMemory[0]);
+				COIN(1);
+				delay(1000);
+				CASTLE();
 			}
+			else {DEATH();}
+			game_over = true;
+			debugln("Failed on letter " + String(current_letter_index) + ", level " + String(level) + "\n:()" );
+			current_letter_index = 0;
+			level = 0;
+			
+			GAMEOVER();
 		}
-		delay(refresh_interval);
 	}
+	if (Serial.available() > 0) {return;}
+	delay(refresh_interval);
+}
 }

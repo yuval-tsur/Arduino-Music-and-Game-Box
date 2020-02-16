@@ -38,8 +38,19 @@ int button_state = 6;
 char receivedChar;
 bool free_play = false;
 
-word InMemory[2] = {0,0}; // For Store in EEPROM - InMemory[1] is the current high score
+word InMemory[3] = {0,0}; // For Store in EEPROM - InMemory[0] is the current high Simon score, InMemory[1] is the current high Reaction score.
 int eeAddress = 0;
+
+byte Speaker[] = { // Sound character for the muting option (https://www.makerguides.com/character-lcd-arduino-tutorial/)
+	B00001,
+	B00011,
+	B00101,
+	B01001,
+	B01001,
+	B01011,
+	B11011,
+	B11000
+};
 
 void turn_off_LEDs(){
 	for (int i=0; i<4; i++){digitalWrite(RED_LED+i,LOW);};
@@ -93,13 +104,27 @@ byte read_buttons(){
 			intermediate_button_state = which_button_pressed(read_analog());
 		}
 	}
-turn_off_LEDs();
-player_1.stop();
-player_2.stop();
-
-return(button_state);
+	turn_off_LEDs();
+	player_1.stop();
+	player_2.stop();
+	
+	return(button_state);
 }	
 
 int random_seed(){
 	return(analogRead(floating_pin));
+}	
+
+void toggle_volume(){
+	//lcd.scrollDisplayLeft();
+	lcd.home();
+	lcd.write(byte(0));
+	if (isMute){
+		isMute = false;
+		lcd.write("v");
+	}else
+	{
+		isMute = true;
+		lcd.write("x");
+	}
 }	
