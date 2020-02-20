@@ -69,7 +69,7 @@ void setup(){
 	player_2.begin(PIN_PLAYER_2);
 	
 	introduzione();
-	delay(1000);	
+	delay(750);	
 	memory_game();
 }
 
@@ -92,14 +92,20 @@ void listen_serial(){
 			play_sequence();
 		}
 		
-		if (receivedChar == 'i'){ // Play introduzione sound
-			introduzione();
+		if (receivedChar == 'i'){ // Reset EEPROM
+			for (eeAddress=0; eeAddress < 3*sizeof(bool); eeAddress += sizeof(bool)){
+				EEPROM.put(eeAddress, 0);
+			}
+			isMute = false;
+			InMemory[1] = 0;
+			InMemory[2] = 0;
+			lcd.clear(); lcd.print(F("   Highscore    ")); lcd.setCursor(0,1); lcd.print("    Cleared.    ");
 		}
 		if (receivedChar == 'm'){ // Play all music
 			playAllMusic();
 		}
 		
-		if (receivedChar == 's'){ // Start normal play!
+		if (receivedChar == 's'){ // Start memory_game play!
 			debugln("Good luck, Player 1!");
 			free_play = false;
 			memory_game();

@@ -38,7 +38,7 @@ int button_state = 6;
 char receivedChar;
 bool free_play = false;
 
-word InMemory[3] = {0,0}; // For Store in EEPROM - InMemory[0] is the current high Simon score, InMemory[1] is the current high Reaction score.
+word InMemory[2] = {0,0}; // For Store in EEPROM - InMemory[0] is the current high Simon score, InMemory[1] is the current high Reaction score.
 int eeAddress = 0;
 
 byte Speaker[] = { // Sound character for the muting option (https://www.makerguides.com/character-lcd-arduino-tutorial/)
@@ -60,11 +60,13 @@ void turn_on_LEDs(){
 	for (int i=0; i<4; i++){digitalWrite(RED_LED+i,HIGH);};
 }
 
-void flash_LEDs(){
-	for(int i=1; i<=2; i++){
+void flash_LEDs(int n=3){
+	for(int i=1; i<=n; i++){
 		turn_on_LEDs();
+		lcd.setBacklight(LOW);
 		delay(150);
 		turn_off_LEDs();
+		lcd.setBacklight(HIGH);
 		delay(150);
 	}
 }

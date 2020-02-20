@@ -78,6 +78,7 @@ bool is_correct_letter(byte button_state){
 void memory_game(){
 	randomSeed(random_seed());
 	game_over = false;
+	lcd.clear(); lcd.print(F("      Go        ")); lcd.setCursor(0,1); lcd.print(" Memory Game!!! ");
 	ONEUP();	
 	current_letter_index = 0;
 	level = 0;	
@@ -93,7 +94,7 @@ void memory_game(){
 				// Player got the right letter. Check if it was the end of the sequence
 				if (current_letter_index == level-1){
 					debugln("Correct! Level " + String(level) + " cleared!");
-					lcd.clear(); lcd.print("Level " + String(level)); lcd.setCursor(0,1); lcd.print(F("completed!"));
+					lcd.clear(); lcd.print("    Level " + String(level)); lcd.setCursor(0,1); lcd.print(F("   completed!   "));
 					current_letter_index = 0;
 					POWERUP();
 					
@@ -110,23 +111,26 @@ void memory_game(){
 			else{ // Player got the wrong letter
 				if (level > InMemory[0]) { // NEW HIGH SCORE!
 					InMemory[0] = level;
-				lcd.print("NEW HIGH SCORE: ");
-				eeAddress = sizeof(bool);
-				EEPROM.put(eeAddress, InMemory[0]);
-				COIN(1);
-				delay(1000);
-				CASTLE();
+					lcd.clear(); lcd.print(F("NEW HIGH SCORE: ")); lcd.setCursor(0,1); lcd.print("       " + String(level) + "       ");
+					eeAddress = sizeof(bool);
+					EEPROM.put(eeAddress, InMemory[0]);
+					COIN(1);
+					flash_LEDs(3);
+					CASTLE();
+				}
+				else {
+					game_over = true;
+					debugln("Failed on letter " + String(current_letter_index) + ", level " + String(level) + "\n:()" );
+					lcd.clear(); lcd.print(F("  Game over ;)  ")); lcd.setCursor(0,1); lcd.print(F("    Level ")); lcd.print(String(level));
+					current_letter_index = 0;
+					level = 0;
+					DEATH();
+					GAMEOVER();
+					lcd.clear(); lcd.print(F("   High score:  ")); lcd.setCursor(0,1); lcd.print("    " + String(InMemory[0]) + "       ");
+					}
 			}
-			else {DEATH();}
-			game_over = true;
-			debugln("Failed on letter " + String(current_letter_index) + ", level " + String(level) + "\n:()" );
-			current_letter_index = 0;
-			level = 0;
-			
-			GAMEOVER();
 		}
+		if (Serial.available() > 0) {return;}
+		delay(refresh_interval);
 	}
-	if (Serial.available() > 0) {return;}
-	delay(refresh_interval);
-}
-}
+}	
