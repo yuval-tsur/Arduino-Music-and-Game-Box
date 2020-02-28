@@ -1,16 +1,24 @@
 #define debug_flag // Comment out to suppress outputs being sent over serial.
 
-#define refresh_interval 1000/15 // [ms] Used for reading button states
-#define button_press_window 400 // [ms] Once button press detected - stop listening so a long press isn't interpreted as several presses
+// Awesome calibration table: (Proto)
+/* //      Button   Analog Value [LSB]
+	#define red_val        42 
+	#define yellow_val    245               
+	#define green_val     378
+	#define blue_val      465 
+String button2str[] = {"Red", "Yellow", "Green", "Blue"}; */
 
-// Awesome calibration table:
-//      Button       Analog Value
-#define red_val     42 
-#define yellow_val 245               
-#define green_val  378
-#define blue_val   465
+// Awesome calibration table: (Final)
+//      Button   Analog Value [LSB]
+#define white_val     592
+#define red_val       537
+#define blue_val      466
+#define yellow_val    372   
+#define black_val     311
+#define green_val     233
+String button2str[] = {"Red", "Blue", "Yellow", "Green", "White", "Black"};
 
-#define val_tol     30 // +- how many LSB can the measurement be far from the calibration
+#define val_tol     20 // +- how many LSB can the measurement be far from the calibration
 
 // Debug header definition
 #ifdef debug_flag
@@ -28,20 +36,17 @@
 // Count an array's length
 #define length(array) ((unsigned int) (sizeof (array) / sizeof (array [0])))
 
-#define floating_pin A0
-
-String button2str[] = {"Red", "Yellow", "Green", "Blue"};
-
 bool game_over = true; // This is the break condition of while loops within the various games. False returns to menu.
-int button_state = 6;
+int level = 0; // Level variable used for all games
+int button_state = 6; // See read_buttons()
 
-char receivedChar;
-bool free_play = false;
+char receivedChar; // Serial port incoming
+bool free_play = false; // AKA toddler mode
 
 word InMemory[2] = {0,0}; // For Store in EEPROM - InMemory[0] is the current high Simon score, InMemory[1] is the current high Reaction score.
 int eeAddress = 0;
 
-byte Speaker[] = { // Sound character for the muting option (https://www.makerguides.com/character-lcd-arduino-tutorial/)
+byte Speaker[] = { // LCD Sound character for the muting option (https://www.makerguides.com/character-lcd-arduino-tutorial/)
 	B00001,
 	B00011,
 	B00101,
@@ -74,10 +79,12 @@ void flash_LEDs(int n=3){
 byte which_button_pressed(int measured_val){
 	// Apply the calibration table
 	if ( abs( measured_val - red_val    ) < val_tol ){ return(0); }
-	if ( abs( measured_val - yellow_val ) < val_tol ){ return(1); }
-	if ( abs( measured_val - green_val  ) < val_tol ){ return(2); }
-	if ( abs( measured_val - blue_val   ) < val_tol ){ return(3); }
-	return(6);
+	if ( abs( measured_val - blue_val   ) < val_tol ){ return(1); }
+	if ( abs( measured_val - yellow_val ) < val_tol ){ return(2); }
+	if ( abs( measured_val - green_val  ) < val_tol ){ return(3); }
+	if ( abs( measured_val - white_val  ) < val_tol ){ return(4); }
+	if ( abs( measured_val - black_val  ) < val_tol ){ return(5); }
+	return(6); // Nothing pressed.
 }
 
 uint16_t read_analog(){
@@ -88,12 +95,11 @@ uint16_t read_analog(){
 
 byte read_buttons(){
 	byte intermediate_button_state;
-	button_state = 6;
 	// Output:
 	// 6 : nothing's pressed
-	// 0-3 : R, Y, G, B Buttons
-	// 4 : OK (Not yet implemented)
-	// 5 : Cancel (Not yet implemented)
+	// 0-3 : R, B, Y, G Buttons
+	// 4 : OK (White)
+	// 5 : Cancel (Black)
 	
 	intermediate_button_state = which_button_pressed(read_analog());
 	if (intermediate_button_state <=3) {
@@ -105,6 +111,9 @@ byte read_buttons(){
 		while (intermediate_button_state <= 3){
 			intermediate_button_state = which_button_pressed(read_analog());
 		}
+	}
+	else { // Pressed white, black or nothing - those do not play a tone.
+		button_state = intermediate_button_state;
 	}
 	turn_off_LEDs();
 	player_1.stop();
@@ -119,6 +128,7 @@ int random_seed(){
 
 void toggle_volume(){
 	//lcd.scrollDisplayLeft();
+	EEPROM.put(0, isMute);
 	lcd.home();
 	lcd.write(byte(0));
 	if (isMute){
@@ -129,4 +139,5 @@ void toggle_volume(){
 		isMute = true;
 		lcd.write("x");
 	}
-}	
+	Serial.println("Mute = " + String(isMute));
+}

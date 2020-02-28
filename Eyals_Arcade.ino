@@ -1,25 +1,25 @@
-// Assuming succeeding pins R, Y, G, B  
-#define RED_LED 6 // Pin number for the red LED
-
-int tronca = 15; // This value is higher and the notes are separated from each other. [OPTIONAL]
-// Input pullup pin for reading all 4 buttons
-#define button_pin A3
+// Arduino Nano pin definitions
+#define RED_LED 5 // Pin number for the red LED, Assuming succeeding pins R, B, Y, G
+#define button_pin A1 // Input pullup pin for reading all 6 buttons
+#define floating_pin A0 // For giving a random seed
 
 // External libraries
 #include <Tone.h>
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
 
-// Speaker stuff
 // Define speaker pins (PWM~) [REQUIRED]
 #define PIN_PLAYER_1 10
 #define PIN_PLAYER_2 11
-bool isMute = false; // Global sound flag
-Tone player_1;
-Tone player_2;
 
-LiquidCrystal_I2C  lcd(  0x3F  ,   2  ,   1  ,   0  ,   4  ,   5  ,   6  ,   7  );
-#define BACKLIGHT_PIN 3
+// Speaker stuff
+int tronca = 15; // Setting this value larger separates notes from each other. [OPTIONAL]
+bool isMute = true; // Global sound switch
+Tone player_1; // Speaker 1 object
+Tone player_2; // Speaker 2 object
+
+LiquidCrystal_I2C  lcd(  0x3F  ,   2  ,   1  ,   0  ,   4  ,   5  ,   6  ,   7  ); // Address is usually 0x27 or 0x3F
+#define BACKLIGHT_PIN 3 // Backlight pin within the LCD module
 
 // Internal headers
 #include "Tone-Functions.h"
@@ -93,12 +93,8 @@ void listen_serial(){
 		}
 		
 		if (receivedChar == 'i'){ // Reset EEPROM
-			for (eeAddress=0; eeAddress < 3*sizeof(bool); eeAddress += sizeof(bool)){
-				EEPROM.put(eeAddress, 0);
-			}
-			isMute = false;
-			InMemory[1] = 0;
-			InMemory[2] = 0;
+			InMemory[0]=0; InMemory[1]=0; 
+			EEPROM.put(sizeof(bool), 0);
 			lcd.clear(); lcd.print(F("   Highscore    ")); lcd.setCursor(0,1); lcd.print("    Cleared.    ");
 		}
 		if (receivedChar == 'm'){ // Play all music
@@ -120,21 +116,9 @@ void listen_serial(){
 		if (receivedChar == 'f'){ // Free button pressing
 			debugln("Welcome to Free Play! Press buttons and have fun!");
 			free_play = true;
-			
 		}	
 		if (receivedChar == 'v'){ // Volume toggle			
-			//lcd.scrollDisplayLeft();
-			lcd.home();
-			lcd.write(byte(0));
-			if (isMute){
-				isMute = false;
-				lcd.write("v");
-			}else
-			{
-				isMute = true;
-				lcd.write("x");
-			}
-			EEPROM.put(0, isMute);
+			toggle_volume();
 		}
 		
 		if (receivedChar == 'c'){ // Button calibration

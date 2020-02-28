@@ -1,9 +1,9 @@
 #define max_level 128 // Must be a power of 2
 #define letters_delay_ms 300 
+#define refresh_interval 1000/20 // [ms] Used for reading button states
 
 byte sequence[max_level/4];
 
-byte level = 0;
 const byte sequence_theme = 1; // 1: pseudo random
 // In the future - can be 2: "Mary had a little lamb" :)
 
@@ -86,7 +86,6 @@ void memory_game(){
 	play_sequence();
 	
 	while (!game_over){
-		randomSeed(millis()); // Perhaps replace with analog input of floating pin?
 		button_state = read_buttons();
 		if (button_state<=3) {
 			
