@@ -11,8 +11,7 @@ int timeout_per_level(byte level){
 }	
 
 void reaction_game(){
-	
-	randomSeed(random_seed());
+	debugln("Good luck, Player 1!");
 	game_over = false;
 	lcd.clear(); lcd.print(F("      Go        ")); lcd.setCursor(0,1); lcd.print("Reaction Game!!!");
 	level = 1;
@@ -24,10 +23,8 @@ void reaction_game(){
 		delay(random(delay_max-delay_min)+delay_min);	
 		current_letter = random(4);
 		digitalWrite(RED_LED+current_letter,HIGH);
-		PlayColor(button_state, (float)letter_duration/150);
+		PlayColor(current_letter, (float)letter_duration/150);
 		
-		//player_1.stop();
-		//player_2.stop();
 		digitalWrite(RED_LED+current_letter,LOW);
 		
 		time = millis();
@@ -53,22 +50,12 @@ void reaction_game(){
 	}
 	
 	// After game over:
-	if (level > InMemory[1]) { // NEW HIGH SCORE!
-		InMemory[1] = level;
-		lcd.clear(); lcd.print(F("NEW HIGH SCORE: ")); lcd.setCursor(0,1); lcd.print("       " + String(level) + "       ");
-		eeAddress = 2*sizeof(bool);
-		EEPROM.put(eeAddress, InMemory[1]);
-		COIN(1);
-		flash_LEDs(3);
-		CASTLE();
+	if (level > EEPROM.read(reaction_highscore_addr)) { // NEW HIGH SCORE!
+		EEPROM.put(reaction_highscore_addr, level);
+		new_high_score(level);
 	}
 	else {
 		debugln("Failed on letter " + String(current_letter) + ", level " + String(level) + "\n:()" );
-		lcd.clear(); lcd.print(F("  Game over ;)  ")); lcd.setCursor(0,1); lcd.print(F("    Level ")); lcd.print(String(level));
-		level = 0;
-		DEATH();
-		GAMEOVER();
-		lcd.clear(); lcd.print(F("   High score:  ")); lcd.setCursor(0,1); lcd.print("    " + String(InMemory[1]) + "       ");
+		show_high_score(EEPROM.read(reaction_highscore_addr));
 	}
-	
-}
+	}	

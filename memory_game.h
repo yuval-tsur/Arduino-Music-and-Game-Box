@@ -1,6 +1,5 @@
 #define max_level 128 // Must be a power of 2
 #define letters_delay_ms 300 
-#define refresh_interval 1000/20 // [ms] Used for reading button states
 
 byte sequence[max_level/4];
 
@@ -59,7 +58,7 @@ void add_letter(){
 		for (int i=((level-1)/4); i>=0; i--){
 			for (int j=7; j>=0; j--){
 				Serial.print(bitRead(sequence[i],j));
-			}
+				}
 			Serial.print(" ");
 		}
 		Serial.println("");
@@ -76,7 +75,7 @@ bool is_correct_letter(byte button_state){
 }
 
 void memory_game(){
-	randomSeed(random_seed());
+	debugln("Good luck, Player 1!");
 	game_over = false;
 	lcd.clear(); lcd.print(F("      Go        ")); lcd.setCursor(0,1); lcd.print(" Memory Game!!! ");
 	ONEUP();	
@@ -87,7 +86,8 @@ void memory_game(){
 	
 	while (!game_over){
 		button_state = read_buttons();
-		if (button_state<=3) {
+		if (button_state<=3) // If pressed on one of the color buttons
+		{
 			
 			if (is_correct_letter(button_state)){
 				// Player got the right letter. Check if it was the end of the sequence
@@ -108,28 +108,22 @@ void memory_game(){
 				turn_off_LEDs();
 			}
 			else{ // Player got the wrong letter
-				if (level > InMemory[0]) { // NEW HIGH SCORE!
-					InMemory[0] = level;
-					lcd.clear(); lcd.print(F("NEW HIGH SCORE: ")); lcd.setCursor(0,1); lcd.print("       " + String(level) + "       ");
-					eeAddress = sizeof(bool);
-					EEPROM.put(eeAddress, InMemory[0]);
-					COIN(1);
-					flash_LEDs(3);
-					CASTLE();
+				if (level > EEPROM.read(memory_highscore_addr)) { // NEW HIGH SCORE!
+					EEPROM.put(memory_highscore_addr, level);
+					new_high_score(level);
 				}
 				else {
 					game_over = true;
 					debugln("Failed on letter " + String(current_letter_index) + ", level " + String(level) + "\n:()" );
-					lcd.clear(); lcd.print(F("  Game over ;)  ")); lcd.setCursor(0,1); lcd.print(F("    Level ")); lcd.print(String(level));
-					current_letter_index = 0;
-					level = 0;
-					DEATH();
-					GAMEOVER();
-					lcd.clear(); lcd.print(F("   High score:  ")); lcd.setCursor(0,1); lcd.print("    " + String(InMemory[0]) + "       ");
-					}
+					show_high_score(memory_highscore_addr);
+				}
 			}
 		}
+		else if (button_state == 5){ // Go to the menu
+			game_over = true;
+		}
+		
 		if (Serial.available() > 0) {return;}
 		delay(refresh_interval);
 	}
-}	
+}

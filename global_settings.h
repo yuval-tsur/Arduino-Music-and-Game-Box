@@ -1,6 +1,10 @@
 #define debug_flag // Comment out to suppress outputs being sent over serial.
 
-// Awesome calibration table: (Proto)
+// Timings
+#define refresh_interval 1000/40 // [ms] Used for reading button states
+#define highscore_disp_timeout 2000 // [ms] Time to display highscore before switching to the menu.
+
+// Awesome calibration table: (Old prototype ver)
 /* //      Button   Analog Value [LSB]
 	#define red_val        42 
 	#define yellow_val    245               
@@ -18,7 +22,7 @@ String button2str[] = {"Red", "Yellow", "Green", "Blue"}; */
 #define green_val     233
 String button2str[] = {"Red", "Blue", "Yellow", "Green", "White", "Black"};
 
-#define val_tol     20 // +- how many LSB can the measurement be far from the calibration
+#define val_tol     20 // +- How many LSB the measurement can be far from the calibrated value
 
 // Debug header definition
 #ifdef debug_flag
@@ -36,15 +40,23 @@ String button2str[] = {"Red", "Blue", "Yellow", "Green", "White", "Black"};
 // Count an array's length
 #define length(array) ((unsigned int) (sizeof (array) / sizeof (array [0])))
 
-bool game_over = true; // This is the break condition of while loops within the various games. False returns to menu.
+bool game_over; // This is the break condition of while loops within the various games. False returns to menu.
 int level = 0; // Level variable used for all games
 int button_state = 6; // See read_buttons()
 
 char receivedChar; // Serial port incoming
 bool free_play = false; // AKA toddler mode
 
-word InMemory[2] = {0,0}; // For Store in EEPROM - InMemory[0] is the current high Simon score, InMemory[1] is the current high Reaction score.
-int eeAddress = 0;
+// EEPROM Stuff
+/* unsigned int InMemory[2] = {0,0}; // For Store in EEPROM - InMemory[0] is the current high Simon score, InMemory[1] is the current high Reaction score.
+	unsigned int eeAddress = 0;
+	unsigned int N_times_played; // Stored @ EEPROM. Both for showing the players and for random seeding.
+*/
+#define isMute_addr 0
+#define memory_highscore_addr 1
+#define reaction_highscore_addr 2
+#define N_times_played_addr 3
+
 
 byte Speaker[] = { // LCD Sound character for the muting option (https://www.makerguides.com/character-lcd-arduino-tutorial/)
 	B00001,
@@ -102,13 +114,14 @@ byte read_buttons(){
 	// 5 : Cancel (Black)
 	
 	intermediate_button_state = which_button_pressed(read_analog());
-	if (intermediate_button_state <=3) {
+	if (intermediate_button_state <=5) {// Debouncing function
 		button_state = intermediate_button_state;
-		digitalWrite(RED_LED+button_state,HIGH);
-		// Play the respective button's tone. Play an indefinite tone but stop it once button was released.
-		PlayColor(button_state, 1000);
+		if (intermediate_button_state <=3) {// Play the respective button's tone. Play an indefinite tone but stop it once button was released.
+			digitalWrite(RED_LED+button_state,HIGH);
+			PlayColor(button_state, 1000);
+		}
 		debugln(button2str[button_state] + "!");
-		while (intermediate_button_state <= 3){
+		while (intermediate_button_state <= 5){
 			intermediate_button_state = which_button_pressed(read_analog());
 		}
 	}
@@ -122,14 +135,34 @@ byte read_buttons(){
 	return(button_state);
 }	
 
-int random_seed(){
-	return(analogRead(floating_pin));
+void end_game(){
+	long tic = millis();
+	while ( ((millis()-tic)<highscore_disp_timeout) && (read_buttons() != 5)  ){
+		delay(refresh_interval);
+	}
+	button_state = 5; // Signal the main sketch to go to the menu
+}
+
+void new_high_score(int level){
+	lcd.clear(); lcd.print(F("NEW HIGH SCORE: ")); lcd.setCursor(0,1); lcd.print("       " + String(level) + "       ");
+	COIN(1);
+	flash_LEDs(3);
+	CASTLE();
+	end_game();
+}
+
+void show_high_score(int level){
+	lcd.clear(); lcd.print(F("  Game over ;)  ")); lcd.setCursor(0,1); lcd.print(F("    Level ")); lcd.print(String(level));
+	DEATH();
+	GAMEOVER();
+	lcd.clear(); lcd.print(F("   High score:  ")); lcd.setCursor(0,1); lcd.print("    " + String(level) + "       ");
+	end_game();
 }	
 
 void toggle_volume(){
 	//lcd.scrollDisplayLeft();
 	EEPROM.put(0, isMute);
-	lcd.home();
+	lcd.setCursor(0,1);
 	lcd.write(byte(0));
 	if (isMute){
 		isMute = false;
@@ -140,4 +173,4 @@ void toggle_volume(){
 		lcd.write("x");
 	}
 	Serial.println("Mute = " + String(isMute));
-}
+	}			

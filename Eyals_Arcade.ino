@@ -8,23 +8,21 @@
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
 
-// Define speaker pins (PWM~) [REQUIRED]
+// Speaker stuff
 #define PIN_PLAYER_1 10
 #define PIN_PLAYER_2 11
-
-// Speaker stuff
 int tronca = 15; // Setting this value larger separates notes from each other. [OPTIONAL]
-bool isMute = true; // Global sound switch
+bool isMute = true; // Global sound switch, stored @ EEPROM, address "isMute_addr".
 Tone player_1; // Speaker 1 object
 Tone player_2; // Speaker 2 object
 
+// LCD stuff
 LiquidCrystal_I2C  lcd(  0x3F  ,   2  ,   1  ,   0  ,   4  ,   5  ,   6  ,   7  ); // Address is usually 0x27 or 0x3F
 #define BACKLIGHT_PIN 3 // Backlight pin within the LCD module
 
 // Internal headers
 #include "Tone-Functions.h"
 #include "global_settings.h"
-#include "LED-Functions.h"
 #include "memory_game.h"
 #include "reaction_game.h"
 
@@ -42,48 +40,34 @@ void setup(){
 	lcd.createChar(0, Speaker);
 	
 	#if defined(debug_flag)
-	lcd.home();
-	lcd.print(F("Waiting for"));
-	lcd.setCursor(0,1);
-	lcd.print(F("serial..."));
+	lcd.home(); lcd.print(F("Waiting for")); lcd.setCursor(0,1); lcd.print(F("serial..."));
 	Serial.begin(9600);
 	delay(100);
-	while(!Serial);                         // If entered debug mode, Arduino will wait here for the Serial monitor to come alive.
+	while(!Serial); // If entered debug mode, Arduino will wait here for the Serial monitor to come alive.
 	Serial.println("Welcome to Eyal's Arcade!\nPlayer 1 Ready...");
 	#endif
 	
 	lcd.home();
-	lcd.print(F(" EYAL'S ARCADE! "));
-	lcd.setCursor(0,1);
+	lcd.print(F(" EYAL'S ARCADE! ")); 	lcd.setCursor(0,1);
 	lcd.print(F("    READY?  ;)  "));
 	
-	// EEPROM reading part
-	eeAddress = 0;
-	EEPROM.get(eeAddress, isMute); // Get Sound Settings
-	eeAddress += sizeof(bool);
-	EEPROM.get(eeAddress, InMemory);
-	// end EEPROM reading part
+	// Load settings
+	//EEPROM.get(eeAddress, isMute); // Get Sound settings from the last time
+	randomSeed(EEPROM.read(N_times_played_addr));
 	
 	// Init Speakers
 	player_1.begin(PIN_PLAYER_1);
 	player_2.begin(PIN_PLAYER_2);
 	
 	introduzione();
-	delay(750);	
+	delay(250);	
 	memory_game();
 }
-
-void loop(){
-	
-	listen_serial();
-	if (free_play ){read_buttons();}
-	delay(refresh_interval);	
-}	
-
 
 void listen_serial(){
 	if (Serial.available() > 0) {
 		receivedChar = Serial.read();
+		
 		if (receivedChar == 'a'){ // Add a sequence letter
 			add_letter();
 		}
@@ -93,22 +77,21 @@ void listen_serial(){
 		}
 		
 		if (receivedChar == 'i'){ // Reset EEPROM
-			InMemory[0]=0; InMemory[1]=0; 
-			EEPROM.put(sizeof(bool), 0);
+			EEPROM.put(memory_highscore_addr, 0);
+			EEPROM.put(reaction_highscore_addr, 0);
 			lcd.clear(); lcd.print(F("   Highscore    ")); lcd.setCursor(0,1); lcd.print("    Cleared.    ");
+			menu();
 		}
 		if (receivedChar == 'm'){ // Play all music
 			playAllMusic();
 		}
 		
 		if (receivedChar == 's'){ // Start memory_game play!
-			debugln("Good luck, Player 1!");
 			free_play = false;
 			memory_game();
 		}
 		
 		if (receivedChar == 'r'){ // Start reaction_game play!
-			debugln("Good luck, Player 1!");
 			free_play = false;
 			reaction_game();
 		}
@@ -125,8 +108,59 @@ void listen_serial(){
 			free_play = false;
 			while (!Serial.available()){
 				debugln(analogRead(button_pin));
-				//delay(refresh_interval);
+				delay(refresh_interval);
 			}
 		}
 	}
 }
+
+void menu(){
+	const String menu_choices[] PROGMEM = {"Memory Game", "Reaction Game", "Free Play"};
+	
+	int current_choice = 0;
+	lcd.clear(); lcd.print(menu_choices[current_choice] + "?");
+	while (true){
+		button_state = read_buttons();
+		if (button_state == 5){ // Change selection
+			current_choice++;
+			if (current_choice == length(menu_choices)){
+				current_choice = 0;
+			}
+			lcd.clear(); lcd.print(menu_choices[current_choice] + "?");
+		}
+		if (button_state == 4){ // Execute selection
+			break;
+		}
+		if (button_state == 2){ // Mute/ Unmute
+			toggle_volume();
+		}
+		if (Serial.available() > 0) {return;}
+	}
+	
+	// Execute!
+	lcd.clear(); lcd.print("Execute!");
+	
+	switch (current_choice){
+		case 0:
+		free_play = false;
+		memory_game();
+		break;
+		case 1:
+		free_play = false;
+		reaction_game();
+		break;
+		case 2:
+		free_play = true;
+		lcd.clear(); lcd.print(menu_choices[current_choice] + "!");
+		break;
+	}
+}
+
+void loop(){
+	listen_serial();
+	if (button_state == 5){
+		menu();
+	}
+	if (free_play){read_buttons();}
+	delay(refresh_interval);	
+}	
