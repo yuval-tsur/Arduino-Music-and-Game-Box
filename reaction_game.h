@@ -56,6 +56,6 @@ void reaction_game(){
 	}
 	else {
 		debugln("Failed on letter " + String(current_letter) + ", level " + String(level) + "\n:()" );
-		show_high_score(EEPROM.read(reaction_highscore_addr));
+	show_high_score(level,reaction_highscore_addr);
 	}
 	}	

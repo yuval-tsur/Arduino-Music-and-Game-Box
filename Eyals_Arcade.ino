@@ -1,7 +1,26 @@
 // Arduino Nano pin definitions
 #define RED_LED 5 // Pin number for the red LED, Assuming succeeding pins R, B, Y, G
 #define button_pin A1 // Input pullup pin for reading all 6 buttons
-#define floating_pin A0 // For giving a random seed
+int button_state = 6; // See read_buttons()
+
+// Awesome calibration table: (Old prototype ver)
+/* //      Button   Analog Value [LSB]
+	#define red_val        42 
+	#define yellow_val    245               
+	#define green_val     378
+	#define blue_val      465 
+String button2str[] = {"Red", "Yellow", "Green", "Blue"}; */
+
+// Awesome calibration table: (Final)
+//      Button   Analog Value [LSB]
+#define white_val     592
+#define red_val       537
+#define blue_val      466
+#define yellow_val    372   
+#define black_val     311
+#define green_val     233
+String button2str[] = {"Red", "Blue", "Yellow", "Green", "White", "Black"};
+#define val_tol     20 // +- How many LSB the measurement can be far from the calibrated value
 
 // External libraries
 #include <Tone.h>
@@ -28,7 +47,6 @@ LiquidCrystal_I2C  lcd(  0x3F  ,   2  ,   1  ,   0  ,   4  ,   5  ,   6  ,   7  
 
 void setup(){
 	pinMode(button_pin,INPUT_PULLUP);
-	pinMode(floating_pin,INPUT);
 	
 	for(int i=0; i<4; i++){
 		pinMode(RED_LED+i,OUTPUT);
@@ -52,7 +70,7 @@ void setup(){
 	lcd.print(F("    READY?  ;)  "));
 	
 	// Load settings
-	//EEPROM.get(eeAddress, isMute); // Get Sound settings from the last time
+	EEPROM.get(isMute_addr, isMute); // Get Sound settings from the last time
 	randomSeed(EEPROM.read(N_times_played_addr));
 	
 	// Init Speakers
@@ -80,6 +98,7 @@ void listen_serial(){
 			EEPROM.put(memory_highscore_addr, 0);
 			EEPROM.put(reaction_highscore_addr, 0);
 			lcd.clear(); lcd.print(F("   Highscore    ")); lcd.setCursor(0,1); lcd.print("    Cleared.    ");
+			delay(1000);
 			menu();
 		}
 		if (receivedChar == 'm'){ // Play all music
@@ -115,8 +134,8 @@ void listen_serial(){
 }
 
 void menu(){
-	const String menu_choices[] PROGMEM = {"Memory Game", "Reaction Game", "Free Play"};
-	
+	const String menu_choices[] PROGMEM = {"Memory Game", "Reaction Game", "Free Play", "Music"};
+	button_state = 6;
 	int current_choice = 0;
 	lcd.clear(); lcd.print(menu_choices[current_choice] + "?");
 	while (true){
@@ -153,12 +172,15 @@ void menu(){
 		free_play = true;
 		lcd.clear(); lcd.print(menu_choices[current_choice] + "!");
 		break;
+		case 3:
+		playAllMusic();
+		break;
 	}
 }
 
 void loop(){
 	listen_serial();
-	if (button_state == 5){
+	if ( (button_state == 5) || read_buttons() == 5){
 		menu();
 	}
 	if (free_play){read_buttons();}

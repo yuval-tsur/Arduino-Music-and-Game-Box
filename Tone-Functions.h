@@ -111,6 +111,12 @@ int ButtonNote[4] = {SOL_d4, RE_d4, FA_d4, DO_d4};
     Ed ecco il risultato:
 */
 
+bool interrupt(){
+	if ( abs( analogRead(button_pin) - black_val  ) < val_tol ){
+		button_state = 5;
+	}
+return (Serial.available() || (button_state == 5));
+}
 
 int inputTempo() {
 	//global tempo_massimo, tempo_minimo;
@@ -166,17 +172,17 @@ void setLetter(int index_letter, bool blink = true) {
 }
 
 void suona(int frequency, float fract, bool blink = true) {
+	if (interrupt()) {return;}	
 	setLetter(getAmericanIndexOfLetterFromFrequency(frequency), blink);
 	if (isMute) {frequency = 0;}
 	player_2.play(frequency, inputTempo() * fract - tronca);
-	//enableDisplay(DISPLAY_1);
 	while(player_2.isPlaying());
-	//disableDisplay(DISPLAY_1);
 	delay(tronca);
 	setLetter(11, blink); // turn off all LEDs
 }
 
 void suonaCoppia(int frequency, float fract, bool blink = true) {
+	if (interrupt()) {return;}	
 	int index_letter = getAmericanIndexOfLetterFromFrequency(frequency);
 	if (isMute) {frequency = 0;}
 	int ms = inputTempo() * fract - tronca;
@@ -191,6 +197,7 @@ void suonaCoppia(int frequency, float fract, bool blink = true) {
 }
 
 void suonaDoppio(int frequency_1, int frequency_2, float fract) {
+	if (interrupt()) {return;}	
 	int index_letter_1 = getAmericanIndexOfLetterFromFrequency(frequency_1);
 	//int index_letter_2 = getAmericanIndexOfLetterFromFrequency(frequency_2);
 	if (isMute) {frequency_1 = 0; frequency_2 = 0;}
@@ -213,8 +220,8 @@ void suonaDoppio(int frequency_1, int frequency_2, float fract) {
 }
 
 void pausa(float fract) {
+	if (interrupt()) {return;}	
 	delay(inputTempo() * fract);
-	
 }
 
 
@@ -1073,59 +1080,62 @@ void OVERWORLD() {
 //--------------------------------------------
 
 void playAllMusic(){
+	if (isMute){return;}
+	
 	lcd.clear();
 	lcd.print(F("PowerUp"));
 	POWERUP();
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("OneUp"));
 	ONEUP();
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("OverWorld"));
 	OVERWORLD();
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("UnderWater"));
 	UNDERWATER();
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("UnderWorld"));
 	UNDERWORLD();
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("Castle"));
 	CASTLE();
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("Item block"));
 	ITEMBLOCK();
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("FlagPole"));
 	FLAGPOLEFANFARE();
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("DamageWarp"));
 	DAMAGEWARP();
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("Coins"));
@@ -1133,18 +1143,18 @@ void playAllMusic(){
 	COIN(1);
 	COIN(5);
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("StarMan"));
 	STARMAN();
 	pausa(5);
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("Death"));
 	DEATH();
-	if (Serial.available() > 0) {return;}
+	if (interrupt()) {return;}
 	
 	lcd.clear();
 	lcd.print(F("Game Over"));

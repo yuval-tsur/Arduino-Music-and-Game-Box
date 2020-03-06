@@ -4,26 +4,6 @@
 #define refresh_interval 1000/40 // [ms] Used for reading button states
 #define highscore_disp_timeout 2000 // [ms] Time to display highscore before switching to the menu.
 
-// Awesome calibration table: (Old prototype ver)
-/* //      Button   Analog Value [LSB]
-	#define red_val        42 
-	#define yellow_val    245               
-	#define green_val     378
-	#define blue_val      465 
-String button2str[] = {"Red", "Yellow", "Green", "Blue"}; */
-
-// Awesome calibration table: (Final)
-//      Button   Analog Value [LSB]
-#define white_val     592
-#define red_val       537
-#define blue_val      466
-#define yellow_val    372   
-#define black_val     311
-#define green_val     233
-String button2str[] = {"Red", "Blue", "Yellow", "Green", "White", "Black"};
-
-#define val_tol     20 // +- How many LSB the measurement can be far from the calibrated value
-
 // Debug header definition
 #ifdef debug_flag
 	#define debug(str)       Serial.print   (str);
@@ -42,7 +22,6 @@ String button2str[] = {"Red", "Blue", "Yellow", "Green", "White", "Black"};
 
 bool game_over; // This is the break condition of while loops within the various games. False returns to menu.
 int level = 0; // Level variable used for all games
-int button_state = 6; // See read_buttons()
 
 char receivedChar; // Serial port incoming
 bool free_play = false; // AKA toddler mode
@@ -147,11 +126,11 @@ void new_high_score(int level){
 	lcd.clear(); lcd.print(F("NEW HIGH SCORE: ")); lcd.setCursor(0,1); lcd.print("       " + String(level) + "       ");
 	COIN(1);
 	flash_LEDs(3);
-	CASTLE();
+	FLAGPOLEFANFARE();
 	end_game();
 }
 
-void show_high_score(int level){
+void show_high_score(int level, byte highscore_addr){
 	lcd.clear(); lcd.print(F("  Game over ;)  ")); lcd.setCursor(0,1); lcd.print(F("    Level ")); lcd.print(String(level));
 	DEATH();
 	GAMEOVER();

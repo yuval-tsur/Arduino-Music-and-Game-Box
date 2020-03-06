@@ -115,7 +115,7 @@ void memory_game(){
 				else {
 					game_over = true;
 					debugln("Failed on letter " + String(current_letter_index) + ", level " + String(level) + "\n:()" );
-					show_high_score(memory_highscore_addr);
+					show_high_score(level,memory_highscore_addr);
 				}
 			}
 		}
