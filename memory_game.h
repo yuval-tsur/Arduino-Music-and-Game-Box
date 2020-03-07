@@ -1,5 +1,5 @@
-#define max_level 128 // Must be a power of 2
-#define letters_delay_ms 300 
+#define max_level 128 // Must be multiple of 4
+uint16_t memory_letters_delay_ms = 300;
 
 byte sequence[max_level/4];
 
@@ -12,7 +12,7 @@ void play_sequence(){
 	byte word;
 	byte letter;
 	debug("Level " + String(level) + ". Playing sequence (start -> end):");
-	delay(letters_delay_ms);
+	delay(memory_letters_delay_ms);
 	for (int i_letter=0; i_letter<level; i_letter++){
 		if (i_letter%4 == 0){
 			word = sequence[(int)(i_letter/4)];
@@ -23,13 +23,13 @@ void play_sequence(){
 		letter = bitRead(word,1)<<1 | bitRead(word,0)<<0; 		
 		digitalWrite(RED_LED+letter,HIGH);
 		// Play the respective button's tone
-		PlayColor(letter, 2);
+		PlayColor(letter, memory_letters_delay_ms/inputTempo());
 		while(player_1.isPlaying()){delay(5);}
 		
 		debug_dec(letter);
 		word = word >> 2;
 		digitalWrite(RED_LED+letter,LOW);
-		delay(letters_delay_ms);		
+		delay(memory_letters_delay_ms);		
 	}	
 	debugln("");
 }
@@ -97,7 +97,7 @@ void memory_game(){
 					current_letter_index = 0;
 					POWERUP();
 					
-					delay(400);					
+					delay(memory_letters_delay_ms);					
 					add_letter();
 					play_sequence();
 				}
@@ -122,8 +122,6 @@ void memory_game(){
 		else if (button_state == 5){ // Go to the menu
 			game_over = true;
 		}
-		
 		if (Serial.available() > 0) {return;}
-		delay(refresh_interval);
 	}
 }

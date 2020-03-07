@@ -1,8 +1,8 @@
 #define debug_flag // Comment out to suppress outputs being sent over serial.
 
 // Timings
-#define refresh_interval 1000/40 // [ms] Used for reading button states
-#define highscore_disp_timeout 2000 // [ms] Time to display highscore before switching to the menu.
+#define refresh_interval 1000/40 // [ms] Used for calibration and free play
+#define highscore_disp_timeout 4000 // [ms] Time to display highscore before switching to the menu.
 
 // Debug header definition
 #ifdef debug_flag
@@ -18,35 +18,22 @@
 #endif
 
 // Count an array's length
-#define length(array) ((unsigned int) (sizeof (array) / sizeof (array [0])))
+#define mylength(array) ((unsigned int) (sizeof (array) / sizeof (array [0])))
 
 bool game_over; // This is the break condition of while loops within the various games. False returns to menu.
-int level = 0; // Level variable used for all games
+byte level = 0; // Level variable used for all games
+uint16_t N_times_played;
 
 char receivedChar; // Serial port incoming
 bool free_play = false; // AKA toddler mode
 
-// EEPROM Stuff
-/* unsigned int InMemory[2] = {0,0}; // For Store in EEPROM - InMemory[0] is the current high Simon score, InMemory[1] is the current high Reaction score.
-	unsigned int eeAddress = 0;
-	unsigned int N_times_played; // Stored @ EEPROM. Both for showing the players and for random seeding.
-*/
-#define isMute_addr 0
-#define memory_highscore_addr 1
-#define reaction_highscore_addr 2
-#define N_times_played_addr 3
-
-
-byte Speaker[] = { // LCD Sound character for the muting option (https://www.makerguides.com/character-lcd-arduino-tutorial/)
-	B00001,
-	B00011,
-	B00101,
-	B01001,
-	B01001,
-	B01011,
-	B11011,
-	B11000
-};
+// EEPROM Stuff                                  // Length (bytes)
+#define isMute_addr 0                            //      1 
+#define memory_highscore_addr 1                  //      1
+#define reaction_highscore_addr 2                //      1
+#define N_times_played_addr 3                    //      2
+#define reaction_initial_timeout_addr 5          //      2
+#define memory_letters_delay_ms_addr  7          //      2
 
 void turn_off_LEDs(){
 	for (int i=0; i<4; i++){digitalWrite(RED_LED+i,LOW);};
@@ -115,34 +102,41 @@ byte read_buttons(){
 }	
 
 void end_game(){
-	long tic = millis();
-	while ( ((millis()-tic)<highscore_disp_timeout) && (read_buttons() != 5)  ){
-		delay(refresh_interval);
-	}
 	button_state = 5; // Signal the main sketch to go to the menu
+	N_times_played++;
+	EEPROM.put(N_times_played_addr,N_times_played);
 }
 
 void new_high_score(int level){
-	lcd.clear(); lcd.print(F("NEW HIGH SCORE: ")); lcd.setCursor(0,1); lcd.print("       " + String(level) + "       ");
-	COIN(1);
+	const String str1 PROGMEM = "NEW HIGH SCORE: ";
+	lcd_print(0,str1);
+	lcd_print(1,String(level));
+	COIN(level);
 	flash_LEDs(3);
 	FLAGPOLEFANFARE();
+	long time = millis();
+	while ((read_buttons()==6) && ((millis()-time) < 2*highscore_disp_timeout)) { delay(refresh_interval); }
 	end_game();
 }
 
 void show_high_score(int level, byte highscore_addr){
-	lcd.clear(); lcd.print(F("  Game over ;)  ")); lcd.setCursor(0,1); lcd.print(F("    Level ")); lcd.print(String(level));
+	const String str1 PROGMEM = "Game over ;)";
+	const String str2 PROGMEM = "Level ";
+	const String str3 PROGMEM = "High score:";
+	lcd_print(0,str1); lcd_print(1,str2 + String(level));
 	DEATH();
+	lcd_print(0,str3); lcd_print(1,String(EEPROM.read(highscore_addr)));
 	GAMEOVER();
-	lcd.clear(); lcd.print(F("   High score:  ")); lcd.setCursor(0,1); lcd.print("    " + String(level) + "       ");
+	long time = millis();
+	while ((read_buttons()==6) && ((millis()-time) < 1*highscore_disp_timeout)){delay(refresh_interval);}
 	end_game();
 }	
 
 void toggle_volume(){
 	//lcd.scrollDisplayLeft();
 	EEPROM.put(0, isMute);
-	lcd.setCursor(0,1);
-	lcd.write(byte(0));
+	lcd_print(1,"");
+	lcd.write(byte(6));
 	if (isMute){
 		isMute = false;
 		lcd.write("v");
@@ -151,5 +145,5 @@ void toggle_volume(){
 		isMute = true;
 		lcd.write("x");
 	}
-	Serial.println("Mute = " + String(isMute));
-	}			
+	debugln("Mute = " + String(isMute));
+}			
