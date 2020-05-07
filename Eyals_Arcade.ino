@@ -31,7 +31,7 @@ String button2str[] = {"Red", "Blue", "Yellow", "Green", "White", "Black"};
 #define PIN_PLAYER_1 10
 #define PIN_PLAYER_2 11
 int tronca = 15; // Setting this value larger separates notes from each other. [OPTIONAL]
-bool isMute = true; // Global sound switch, stored @ EEPROM, address "isMute_addr".
+bool isMute = false; // Global sound switch, stored @ EEPROM, address "isMute_addr".
 Tone player_1; // Speaker 1 object
 Tone player_2; // Speaker 2 object
 
@@ -152,12 +152,11 @@ void menu(){
 		if (button_state == 4){ // Execute selection
 			break;
 		}
-		if (button_state == 2){ // Mute/ Unmute
-			toggle_volume();
-		}
-		if (button_state == 0){ // Settings
-			settings();
-			lcd.clear(); lcd.print(menu_choices[current_choice] + "?");
+		if (button_state == 0){ // Double click for settings (child proof)
+			if (is_double_click(button_state)){	
+				settings();
+				lcd.clear(); lcd.print(menu_choices[current_choice] + "?");
+			}
 		}
 		if (Serial.available() > 0) {return;}
 	}
@@ -221,6 +220,10 @@ void change_up_setting(byte current_setting){
 		case 5:
 		toggle_volume();
 		break;
+		case 6:
+		clear_EEPROM();
+		menu();
+		break;
 	}
 	display_parameter(current_setting);
 }
@@ -236,12 +239,16 @@ void change_down_setting(byte current_setting){
 		case 5:
 		toggle_volume();
 		break;
+		case 6:
+		clear_EEPROM();
+		menu();
+		break;
 	}
 	display_parameter(current_setting);	
 }
 
 void settings(){
-	const String settings_choices[] PROGMEM = {"Memory [ms]", "Reaction [ms]", "Times played", "Memory score", "Reaction score", "Volume"};
+	const String settings_choices[] PROGMEM = {"Memory [ms]", "Reaction [ms]", "Times played", "Memory score", "Reaction score", "Volume", "Clear EEPROM"};
 	byte current_setting = 0;
 	lcd_print(0, settings_choices[current_setting]);
 	display_parameter(current_setting);

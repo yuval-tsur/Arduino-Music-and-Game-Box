@@ -115,7 +115,7 @@ bool interrupt(){
 	if ( abs( analogRead(button_pin) - black_val  ) < val_tol ){
 		button_state = 5;
 	}
-return (Serial.available() || (button_state == 5));
+return (Serial.available() || (button_state == 5)); // Interrupt tones either when seria data is available or pressed black button.
 }
 
 int inputTempo() {
@@ -199,21 +199,13 @@ void suonaCoppia(int frequency, float fract, bool blink = true) {
 void suonaDoppio(int frequency_1, int frequency_2, float fract) {
 	if (interrupt()) {return;}	
 	int index_letter_1 = getAmericanIndexOfLetterFromFrequency(frequency_1);
-	//int index_letter_2 = getAmericanIndexOfLetterFromFrequency(frequency_2);
 	if (isMute) {frequency_1 = 0; frequency_2 = 0;}
 	int ms = inputTempo() * fract - tronca;
 	player_1.play(frequency_1, ms);
 	player_2.play(frequency_2, ms);
 	while(player_1.isPlaying() || player_2.isPlaying()) {
-		//enableDisplay(DISPLAY_1);
 		setLetter(index_letter_1);
 		delay(4);
-		//disableDisplay(DISPLAY_1);
-		//delay(1);
-		//enableDisplay(DISPLAY_2);
-		//setLetter(index_letter_2);
-		//delay(4);
-		//disableDisplay(DISPLAY_2);
 	}
 	delay(tronca);
 	setLetter(11); // turn off all LEDs
@@ -1169,7 +1161,7 @@ String StrNoteStan[12] = {"DO", "DO#", "RE", "RE#", "MI", "FA#", "FA", "SOL#", "
 
 // Play Color
 void PlayColor(byte LED_color, float fract = 1, bool blink = false) {
-	if (isMute) {delay(200);} // Long Blink if NOT Sound
+	if (isMute) {delay(inputTempo() - tronca);} // Long Blink if NOT Sound
 	suonaCoppia(ButtonNote[LED_color], fract, blink);
 }
 

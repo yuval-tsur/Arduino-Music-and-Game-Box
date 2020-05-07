@@ -1,4 +1,4 @@
-#define debug_flag // Comment out to suppress outputs being sent over serial.
+//#define debug_flag // Comment out to suppress outputs being sent over serial.
 
 // Timings
 #define refresh_interval 1000/40 // [ms] Used for calibration and free play
@@ -67,19 +67,18 @@ byte which_button_pressed(int measured_val){
 
 uint16_t read_analog(){
 	uint16_t measured_val = analogRead(button_pin);
-	delay(20);
+	delay(15);
 	return(min(measured_val,analogRead(button_pin))); // Try overcoming jitter
 }
 
 byte read_buttons(){
-	byte intermediate_button_state;
 	// Output:
 	// 6 : nothing's pressed
 	// 0-3 : R, B, Y, G Buttons
 	// 4 : OK (White)
 	// 5 : Cancel (Black)
+	byte intermediate_button_state = which_button_pressed(read_analog());
 	
-	intermediate_button_state = which_button_pressed(read_analog());
 	if (intermediate_button_state <=5) {// Debouncing function
 		button_state = intermediate_button_state;
 		if (intermediate_button_state <=3) {// Play the respective button's tone. Play an indefinite tone but stop it once button was released.
@@ -91,7 +90,7 @@ byte read_buttons(){
 			intermediate_button_state = which_button_pressed(read_analog());
 		}
 	}
-	else { // Pressed white, black or nothing - those do not play a tone.
+	else { // Pressed nothing.
 		button_state = intermediate_button_state;
 	}
 	turn_off_LEDs();
@@ -100,6 +99,16 @@ byte read_buttons(){
 	
 	return(button_state);
 }	
+
+bool is_double_click(byte first_click){
+	const byte click_window_ms = 1000;
+	long t_start = millis();
+	button_state = 6;
+	while ((button_state==6) && ((millis()-t_start)<click_window_ms)){
+		button_state = read_buttons();
+	}
+	return(button_state == first_click);
+}
 
 void end_game(){
 	button_state = 5; // Signal the main sketch to go to the menu
@@ -134,9 +143,7 @@ void show_high_score(int level, byte highscore_addr){
 
 void toggle_volume(){
 	//lcd.scrollDisplayLeft();
-	EEPROM.put(0, isMute);
-	lcd_print(1,"");
-	lcd.write(byte(6));
+	lcd_print(1,""); lcd.write(byte(6)); // Speaker character 
 	if (isMute){
 		isMute = false;
 		lcd.write("v");
@@ -146,4 +153,31 @@ void toggle_volume(){
 		lcd.write("x");
 	}
 	debugln("Mute = " + String(isMute));
-}			
+	EEPROM.put(isMute_addr, isMute);
+}
+
+void clear_EEPROM(){
+	const String str1 PROGMEM = "2X click white";
+	const String str2 PROGMEM = "clear EEPROM";
+	const String str3 PROGMEM = "Done!";
+	
+	button_state = 6;
+	lcd_print(0,str1);
+	lcd_print(1,str2);
+	while (button_state == 6){
+		button_state = read_buttons();
+		delay(refresh_interval);
+	}
+	if (button_state == 4){ // First click on white
+		if (is_double_click(4)){
+			// Clear stuff
+			EEPROM.put(memory_highscore_addr, byte(0));
+			EEPROM.put(reaction_highscore_addr, byte(0));
+			N_times_played = uint16_t(0);
+			EEPROM.put(N_times_played_addr, N_times_played);
+			lcd.clear();
+			lcd_print(0,str3);
+			delay(750);
+		}
+	}
+}	
