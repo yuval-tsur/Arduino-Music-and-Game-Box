@@ -13,14 +13,14 @@ String button2str[] = {"Red", "Yellow", "Green", "Blue"}; */
 
 // Awesome calibration table: (Final)
 //      Button   Analog Value [LSB]
-#define white_val     592
-#define red_val       537
-#define blue_val      466
+#define white_val     593
+#define red_val       538
+#define blue_val      467
 #define yellow_val    372   
 #define black_val     311
-#define green_val     233
+#define green_val     234
 String button2str[] = {"Red", "Blue", "Yellow", "Green", "White", "Black"};
-#define val_tol     20 // +- How many LSB the measurement can be far from the calibrated value
+#define val_tol     6 // +- How many LSB the measurement can be far from the calibrated value
 
 // External libraries
 #include <Tone.h>
@@ -80,7 +80,7 @@ void setup(){
 	player_2.begin(PIN_PLAYER_2);
 	
 	introduzione();
-	delay(250);	
+	delay(200);	
 	memory_game();
 }
 
@@ -142,14 +142,14 @@ void menu(){
 	lcd.clear(); lcd.print(menu_choices[current_choice] + "?");
 	while (true){
 		button_state = read_buttons();
-		if (button_state == 5){ // Change selection
+		if (button_state == 4){ // Change selection
 			current_choice++;
 			if (current_choice == mylength(menu_choices)){
 				current_choice = 0;
 			}
 			lcd.clear(); lcd.print(menu_choices[current_choice] + "?");
 		}
-		if (button_state == 4){ // Execute selection
+		if (button_state == 5){ // Execute selection
 			break;
 		}
 		if (button_state == 0){ // Double click for settings (child proof)
@@ -212,10 +212,10 @@ void display_parameter(byte current_setting){
 void change_up_setting(byte current_setting){
 	switch (current_setting){
 		case 0:
-		memory_letters_delay_ms = round(((float)memory_letters_delay_ms) * 1.15);
+		memory_letters_delay_ms = min(2500,round(((float)memory_letters_delay_ms) * 1.15));
 		break;
 		case 1:
-		reaction_initial_timeout = round(((float)reaction_initial_timeout) * 1.15);
+		reaction_initial_timeout = min(5000,round(((float)reaction_initial_timeout) * 1.15));
 		break;
 		case 5:
 		toggle_volume();
@@ -231,10 +231,10 @@ void change_up_setting(byte current_setting){
 void change_down_setting(byte current_setting){
 	switch (current_setting){
 		case 0:
-		memory_letters_delay_ms = round(((float)memory_letters_delay_ms) / 1.15);
+		memory_letters_delay_ms = max(100,round(((float)memory_letters_delay_ms) / 1.15));
 		break;
 		case 1:
-		reaction_initial_timeout = round(((float)reaction_initial_timeout) / 1.15);
+		reaction_initial_timeout = max(100,round(((float)reaction_initial_timeout) / 1.15));
 		break;
 		case 5:
 		toggle_volume();
@@ -254,7 +254,7 @@ void settings(){
 	display_parameter(current_setting);
 	while (true){
 		button_state = read_buttons();
-		if (button_state == 5){ // Change selection
+		if (button_state == 4){ // Change selection
 			current_setting++;
 			if (current_setting == mylength(settings_choices)){
 				current_setting = 0;
@@ -262,7 +262,7 @@ void settings(){
 			lcd_print(0, settings_choices[current_setting]);
 			display_parameter(current_setting);
 		}
-		if (button_state == 4){ // Save and quit this sub-menu
+		if (button_state == 5){ // Save and quit this sub-menu
 			EEPROM.put(memory_letters_delay_ms_addr,memory_letters_delay_ms);		
 			EEPROM.put(reaction_initial_timeout_addr,reaction_initial_timeout);
 			return;
@@ -282,7 +282,7 @@ void settings(){
 
 void loop(){
 	listen_serial();
-	if ( (button_state == 5) || read_buttons() == 5){
+	if ( (button_state == 4) || read_buttons() == 4){
 		menu();
 	}
 	if (free_play){read_buttons();}

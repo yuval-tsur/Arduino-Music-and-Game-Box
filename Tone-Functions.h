@@ -112,10 +112,10 @@ int ButtonNote[4] = {SOL_d4, RE_d4, FA_d4, DO_d4};
 */
 
 bool interrupt(){
-	if ( abs( analogRead(button_pin) - black_val  ) < val_tol ){
-		button_state = 5;
+	if ( abs( analogRead(button_pin) - white_val  ) < val_tol ){
+		button_state = 4;
 	}
-return (Serial.available() || (button_state == 5)); // Interrupt tones either when seria data is available or pressed black button.
+return (Serial.available() || (button_state == 4)); // Interrupt tones either when serial data is available or pressed white button.
 }
 
 int inputTempo() {

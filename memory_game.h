@@ -5,7 +5,7 @@ byte sequence[max_level/4];
 
 const byte sequence_theme = 1; // 1: pseudo random
 // In the future - can be 2: "Mary had a little lamb" :)
-
+//const PROGMEM	
 byte current_letter_index = 0; // Stores the index of letter just pressed by the player
 
 void play_sequence(){
@@ -35,6 +35,7 @@ void play_sequence(){
 }
 
 void add_letter(){
+	// Add 1 letter to the global var called "sequence"
 	byte letter;
 	
 	switch (sequence_theme){
@@ -119,7 +120,7 @@ void memory_game(){
 				}
 			}
 		}
-		else if (button_state == 5){ // Go to the menu
+		else if (button_state == 4){ // Go to the menu
 			game_over = true;
 		}
 		if (Serial.available() > 0) {return;}

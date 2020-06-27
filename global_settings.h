@@ -1,8 +1,9 @@
-//#define debug_flag // Comment out to suppress outputs being sent over serial.
+//#define debug_flag                  // Comment out to suppress outputs being sent over serial.
 
 // Timings
-#define refresh_interval 1000/40 // [ms] Used for calibration and free play
+#define refresh_interval 1000/40    // [ms] Used for calibration and free play
 #define highscore_disp_timeout 4000 // [ms] Time to display highscore before switching to the menu.
+#define click_window_ms 1000        // [ms] Max delay between clicks in a double click
 
 // Debug header definition
 #ifdef debug_flag
@@ -101,7 +102,6 @@ byte read_buttons(){
 }	
 
 bool is_double_click(byte first_click){
-	const byte click_window_ms = 1000;
 	long t_start = millis();
 	button_state = 6;
 	while ((button_state==6) && ((millis()-t_start)<click_window_ms)){
@@ -157,7 +157,7 @@ void toggle_volume(){
 }
 
 void clear_EEPROM(){
-	const String str1 PROGMEM = "2X click white";
+	const String str1 PROGMEM = "2X click black";
 	const String str2 PROGMEM = "clear EEPROM";
 	const String str3 PROGMEM = "Done!";
 	
@@ -168,8 +168,8 @@ void clear_EEPROM(){
 		button_state = read_buttons();
 		delay(refresh_interval);
 	}
-	if (button_state == 4){ // First click on white
-		if (is_double_click(4)){
+	if (button_state == 5){ // First click on white
+		if (is_double_click(5)){
 			// Clear stuff
 			EEPROM.put(memory_highscore_addr, byte(0));
 			EEPROM.put(reaction_highscore_addr, byte(0));
