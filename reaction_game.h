@@ -51,6 +51,10 @@ void reaction_game(){
 				}
 				break;				
 			}
+     else if (button_state == 4){ // Menu time
+      game_over = true;
+      return;
+     }
 			// Update the progress bar
 			if ( (millis() - progress_bar_updated) > (timeout_per_level(level)/(0.5*SCREEN_WIDTH))){ // Time to update progress bar
 				nb_cols++;

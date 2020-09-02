@@ -16,29 +16,30 @@ String button2str[] = {"Red", "Yellow", "Green", "Blue"}; */
 #define white_val     593
 #define red_val       538
 #define blue_val      467
-#define yellow_val    372   
-#define black_val     311
-#define green_val     234
+#define yellow_val    373   
+#define black_val     310
+#define green_val     235
 String button2str[] = {"Red", "Blue", "Yellow", "Green", "White", "Black"};
-#define val_tol     6 // +- How many LSB the measurement can be far from the calibrated value
+#define val_tol         8 // +- How many LSB the measurement can be far from the calibrated value
+#define N_avg           15 // Number of analog reads to average for a button value - minimize jitter
 
 // External libraries
-#include <Tone.h>
-#include <LiquidCrystal_I2C.h>
-#include <EEPROM.h>
+#include <Tone.h> // https://github.com/bhagman/Tone/ (V1.0.0)
+#include <LiquidCrystal_I2C.h> // https://github.com/fmalpartida/New-LiquidCrystal (V1.5.0)
+#include <EEPROM.h> // Arduino built-in
 
 // Speaker stuff
 #define PIN_PLAYER_1 10
 #define PIN_PLAYER_2 11
-int tronca = 15; // Setting this value larger separates notes from each other. [OPTIONAL]
+int tronca = 15; // Increasing this value separates notes from each other. [OPTIONAL]
 bool isMute = false; // Global sound switch, stored @ EEPROM, address "isMute_addr".
 Tone player_1; // Speaker 1 object
 Tone player_2; // Speaker 2 object
 
 // Internal headers
-#include "lcd_stuff.h"
-#include "Tone-Functions.h"
-#include "global_settings.h"
+#include "lcd_functions.h"
+#include "tone_functions.h"
+#include "global_functions.h"
 #include "memory_game.h"
 #include "reaction_game.h"
 
@@ -57,7 +58,7 @@ void setup(){
 	lcd.home(); lcd.print(F("Waiting for")); lcd.setCursor(0,1); lcd.print(F("serial..."));
 	Serial.begin(9600);
 	delay(100);
-	while(!Serial); // If entered debug mode, Arduino will wait here for the Serial monitor to come alive.
+	while(!Serial);
 	Serial.println("Welcome to Eyal's Arcade!\nPlayer 1 Ready...");
 	#endif
 	
