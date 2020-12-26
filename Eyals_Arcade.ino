@@ -1,6 +1,8 @@
 // Arduino Nano pin definitions
 #define RED_LED 5 // Pin number for the red LED, Assuming succeeding pins R, B, Y, G
 #define button_pin A1 // Input pullup pin for reading all 6 buttons
+#define menu_pin A3 // Input pullup pin for reading just the menu button (special treatment as it interrupts games)
+
 byte button_state = 6; // See read_buttons()
 
 // Awesome calibration table: (Old prototype ver)
@@ -20,8 +22,8 @@ String button2str[] = {"Red", "Yellow", "Green", "Blue"}; */
 #define black_val     310
 #define green_val     235
 String button2str[] = {"Red", "Blue", "Yellow", "Green", "White", "Black"};
-#define val_tol         8 // +- How many LSB the measurement can be far from the calibrated value
-#define N_avg           15 // Number of analog reads to average for a button value - minimize jitter
+#define val_tol        16 // +- How many LSB the measurement can be far from the calibrated value
+#define N_avg          6 // Number of analog reads to average for a button value - minimize jitter
 
 // External libraries
 #include <Tone.h> // https://github.com/bhagman/Tone/ (V1.0.0)
@@ -45,6 +47,7 @@ Tone player_2; // Speaker 2 object
 
 void setup(){
 	pinMode(button_pin,INPUT_PULLUP);
+	pinMode(menu_pin,INPUT_PULLUP);
 	
 	for(int i=0; i<4; i++){
 		pinMode(RED_LED+i,OUTPUT);
@@ -119,7 +122,6 @@ void listen_serial(){
 		}
 		
 		if (receivedChar == 'f'){ // Free button pressing
-			debugln("Welcome to Free Play! Press buttons and have fun!");
 			free_play = true;
 		}	
 		if (receivedChar == 'v'){ // Volume toggle			
@@ -130,6 +132,7 @@ void listen_serial(){
 			free_play = false;
 			while (!Serial.available()){
 				debugln(analogRead(button_pin));
+				debugln("Menu:" + String(analogRead(menu_pin)));
 				delay(refresh_interval);
 			}
 		}

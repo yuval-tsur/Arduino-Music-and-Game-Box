@@ -112,7 +112,7 @@ int ButtonNote[4] = {SOL_d4, RE_d4, FA_d4, DO_d4};
 */
 
 bool interrupt(){
-	if ( abs( analogRead(button_pin) - white_val  ) < val_tol ){
+	if ( analogRead(menu_pin) < 1000 ){
 		button_state = 4;
 	}
 return (Serial.available() || (button_state == 4)); // Interrupt tones either when serial data is available or pressed white button.

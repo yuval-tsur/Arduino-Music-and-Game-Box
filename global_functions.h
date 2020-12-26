@@ -1,8 +1,8 @@
-#define debug_flag                  // Comment out to suppress outputs being sent over serial.
+//#define debug_flag                  // Comment out to suppress outputs being sent over serial.
 
 // Timings
 #define refresh_interval 1000/40    // [ms] Used for calibration and free play
-#define highscore_disp_timeout 4000 // [ms] Time to display highscore before switching to the menu.
+#define highscore_disp_timeout 3000 // [ms] Time to display highscore before switching to the menu.
 #define click_window_ms 1000        // [ms] Max delay between clicks in a double click
 
 // Debug header definition
@@ -63,12 +63,16 @@ byte which_button_pressed(int measured_val){
 	if ( abs( measured_val - blue_val   ) < val_tol ){ return(1); }
 	if ( abs( measured_val - yellow_val ) < val_tol ){ return(2); }
 	if ( abs( measured_val - green_val  ) < val_tol ){ return(3); }
-	if ( abs( measured_val - white_val  ) < val_tol ){ return(4); }
+	if (  measured_val                ==  white_val ){ return(4); } // Menu sits on a separate pin
 	if ( abs( measured_val - black_val  ) < val_tol ){ return(5); }
 	return(7); // Error measuring - ignore.
 }
 
 uint16_t read_analog(){
+	if (analogRead(menu_pin) < 1000){ // Pressed white (menu)!
+		return( white_val );
+	}
+	
 	float measured_val = 0;
 	for (int i = 0; i < N_avg; i++){ // Try overcoming jitter
 	  measured_val += float(analogRead(button_pin))/N_avg;
