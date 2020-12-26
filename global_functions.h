@@ -59,7 +59,7 @@ void flash_LEDs(int n=3){
 byte which_button_pressed(int measured_val){
 	// Apply the calibration table
 	if (      measured_val > 1000                   ){ return(6); } // Nothing pressed
-  if ( abs( measured_val - red_val    ) < val_tol ){ return(0); }
+    if ( abs( measured_val - red_val    ) < val_tol ){ return(0); }
 	if ( abs( measured_val - blue_val   ) < val_tol ){ return(1); }
 	if ( abs( measured_val - yellow_val ) < val_tol ){ return(2); }
 	if ( abs( measured_val - green_val  ) < val_tol ){ return(3); }
@@ -68,17 +68,36 @@ byte which_button_pressed(int measured_val){
 	return(7); // Error measuring - ignore.
 }
 
+float average(uint16_t *array)  // assuming array is uint16_t, length is variable, ignore entries equal 5000.
+{
+  int len=0;
+  long sum = 0L ;  // sum will be larger than an item, long for safety.
+  for (int i = 0 ; i < N_avg ; i++){
+  	if (array[i] != 5000) {sum += array[i]; len++;} // 5000 defines an outlier has been found at this index.
+  }
+  return  (uint16_t) ((float)sum / len);  // average will floored
+}
+
 uint16_t read_analog(){
+	uint16_t measured_vals[N_avg];
+	float avg_val;
+
 	if (analogRead(menu_pin) < 1000){ // Pressed white (menu)!
 		return( white_val );
 	}
 	
 	float measured_val = 0;
 	for (int i = 0; i < N_avg; i++){ // Try overcoming jitter
-	  measured_val += float(analogRead(button_pin))/N_avg;
-    delay(1);
+		measured_vals[i] = analogRead(button_pin);
+    	delay(1);
 	}
-  measured_val = round(measured_val);
+	avg_val = average(measured_vals);
+  // Remove outliers
+  	for (int i = 0; i < N_avg; i++){
+		if( abs(measured_vals[i] - avg_val) > (3 * val_tol) ) { measured_vals[i] = 5000; }
+	}
+  measured_val = average(measured_vals);
+  
   #ifdef debug_flag
     if (measured_val < 1000) {debugln_dec(measured_val);}
   #endif
